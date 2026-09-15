@@ -1,0 +1,6 @@
+{
+  "name": "Medicine Tracker",
+  "description": "Medicine reminders for daily doses, medication inventory tracking with refill alerts, and doctor appointment scheduling with notifications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
