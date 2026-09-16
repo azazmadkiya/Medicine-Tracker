@@ -29,6 +29,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import com.example.data.local.entity.Contact
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,12 +56,16 @@ import java.util.Locale
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AddAppointmentDialog(
+    professionals: List<Contact> = emptyList(),
+    hospitals: List<Contact> = emptyList(),
     onDismiss: () -> Unit,
     onSave: (Appointment) -> Unit
 ) {
     var doctorName by remember { mutableStateOf("") }
+    var doctorExpanded by remember { mutableStateOf(false) }
     var specialty by remember { mutableStateOf("Primary Care") }
     var clinicName by remember { mutableStateOf("") }
+    var clinicExpanded by remember { mutableStateOf(false) }
     var location by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var reasonNotes by remember { mutableStateOf("") }
@@ -103,16 +111,46 @@ fun AddAppointmentDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                OutlinedTextField(
-                    value = doctorName,
-                    onValueChange = { doctorName = it },
-                    label = { Text("Doctor / Physician Name *") },
-                    placeholder = { Text("e.g. Dr. Sarah Jenkins") },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("doctor_name_input")
-                )
+                ExposedDropdownMenuBox(
+                    expanded = doctorExpanded,
+                    onExpandedChange = { doctorExpanded = !doctorExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = doctorName,
+                        onValueChange = { doctorName = it },
+                        label = { Text("Doctor / Physician Name *") },
+                        placeholder = { Text("e.g. Dr. Sarah Jenkins") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .testTag("doctor_name_input"),
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = doctorExpanded)
+                        },
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    )
+                    
+                    if (professionals.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = doctorExpanded,
+                            onDismissRequest = { doctorExpanded = false }
+                        ) {
+                            professionals.forEach { prof ->
+                                DropdownMenuItem(
+                                    text = { Text(prof.name) },
+                                    onClick = {
+                                        doctorName = prof.name
+                                        if (prof.speciality.isNotBlank()) specialty = prof.speciality
+                                        if (prof.address.isNotBlank()) location = prof.address
+                                        if (prof.phoneNumber.isNotBlank()) phoneNumber = prof.phoneNumber
+                                        doctorExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -133,16 +171,45 @@ fun AddAppointmentDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
-                    value = clinicName,
-                    onValueChange = { clinicName = it },
-                    label = { Text("Hospital / Clinic Name *") },
-                    placeholder = { Text("e.g. Metro Health Medical Center") },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("clinic_name_input")
-                )
+                ExposedDropdownMenuBox(
+                    expanded = clinicExpanded,
+                    onExpandedChange = { clinicExpanded = !clinicExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = clinicName,
+                        onValueChange = { clinicName = it },
+                        label = { Text("Hospital / Clinic Name *") },
+                        placeholder = { Text("e.g. Metro Health Medical Center") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .testTag("clinic_name_input"),
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = clinicExpanded)
+                        },
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    )
+                    
+                    if (hospitals.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = clinicExpanded,
+                            onDismissRequest = { clinicExpanded = false }
+                        ) {
+                            hospitals.forEach { hospital ->
+                                DropdownMenuItem(
+                                    text = { Text(hospital.name) },
+                                    onClick = {
+                                        clinicName = hospital.name
+                                        if (hospital.address.isNotBlank()) location = hospital.address
+                                        if (hospital.phoneNumber.isNotBlank()) phoneNumber = hospital.phoneNumber
+                                        clinicExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
 

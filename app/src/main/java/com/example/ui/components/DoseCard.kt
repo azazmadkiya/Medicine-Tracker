@@ -152,18 +152,19 @@ fun DoseCard(
 
             // Middle: Name, dosage, instruction & stock warning
             Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = dose.medication.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration = if (isSkipped) TextDecoration.LineThrough else TextDecoration.None,
+                    color = if (isSkipped) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = dose.medication.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        textDecoration = if (isSkipped) TextDecoration.LineThrough else TextDecoration.None,
-                        color = if (isSkipped) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Surface(
                         color = medColor.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(6.dp)
@@ -178,15 +179,15 @@ fun DoseCard(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "${dose.medication.instruction} • ${dose.medication.form}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(3.dp))
-
-                Text(
-                    text = "${dose.medication.instruction} • ${dose.medication.form}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
 
                 if (dose.medication.isLowStock) {
                     Spacer(modifier = Modifier.height(4.dp))

@@ -3,19 +3,23 @@ package com.example.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
+import com.example.R
 import com.example.notifications.receiver.ReminderAlarmReceiver
 
 class NotificationHelper(private val context: Context) {
 
     companion object {
-        const val CHANNEL_MEDICATION = "medication_reminders_channel"
-        const val CHANNEL_LOW_STOCK = "low_stock_alerts_channel"
-        const val CHANNEL_APPOINTMENT = "appointment_reminders_channel"
+        const val CHANNEL_MEDICATION = "medication_reminders_channel_v2"
+        const val CHANNEL_LOW_STOCK = "low_stock_alerts_channel_v2"
+        const val CHANNEL_APPOINTMENT = "appointment_reminders_channel_v2"
 
         const val EXTRA_MED_ID = "extra_med_id"
         const val EXTRA_MED_NAME = "extra_med_name"
@@ -40,6 +44,12 @@ class NotificationHelper(private val context: Context) {
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.packageName + "/" + R.raw.medication_alert)
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build()
+
             val medChannel = NotificationChannel(
                 CHANNEL_MEDICATION,
                 "Medication Reminders",
@@ -48,6 +58,7 @@ class NotificationHelper(private val context: Context) {
                 description = "Notifies when it is time to take prescribed medications and doses"
                 enableVibration(true)
                 enableLights(true)
+                setSound(soundUri, audioAttributes)
             }
 
             val stockChannel = NotificationChannel(
@@ -56,6 +67,7 @@ class NotificationHelper(private val context: Context) {
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Alerts when medicine stock is running low and needs refilling"
+                setSound(soundUri, audioAttributes)
             }
 
             val apptChannel = NotificationChannel(
@@ -65,6 +77,7 @@ class NotificationHelper(private val context: Context) {
             ).apply {
                 description = "Reminders for upcoming clinical visits and doctor consultations"
                 enableVibration(true)
+                setSound(soundUri, audioAttributes)
             }
 
             notificationManager.createNotificationChannels(listOf(medChannel, stockChannel, apptChannel))

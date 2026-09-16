@@ -19,6 +19,9 @@ interface DoseLogDao {
     @Query("SELECT * FROM dose_logs WHERE doseDate >= :startDate AND doseDate <= :endDate")
     fun getLogsForDateRange(startDate: String, endDate: String): Flow<List<DoseLog>>
 
+    @Query("SELECT * FROM dose_logs WHERE medicationId = :medicationId ORDER BY doseDate DESC, doseTime DESC")
+    fun getLogsForMedication(medicationId: Long): Flow<List<DoseLog>>
+
     @Query("SELECT COUNT(*) FROM dose_logs WHERE doseDate = :date AND status = 'TAKEN'")
     fun getTakenCountForDate(date: String): Flow<Int>
 

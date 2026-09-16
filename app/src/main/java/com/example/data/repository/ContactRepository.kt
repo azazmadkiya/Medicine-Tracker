@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 class ContactRepository(private val contactDao: ContactDao) {
     val pharmacies: Flow<List<Contact>> = contactDao.getContactsByType("PHARMACY")
     val hospitals: Flow<List<Contact>> = contactDao.getContactsByType("HOSPITAL")
+    val professionals: Flow<List<Contact>> = contactDao.getContactsByType("DOCTOR")
 
     suspend fun insertContact(contact: Contact) {
         contactDao.insertContact(contact)

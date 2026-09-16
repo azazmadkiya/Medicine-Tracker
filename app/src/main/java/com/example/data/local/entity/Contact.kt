@@ -8,8 +8,13 @@ data class Contact(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val type: String, // "PHARMACY" or "HOSPITAL"
-    val phoneNumber: String,
-    val address: String,
+    val type: String, // "PHARMACY", "HOSPITAL", "DOCTOR"
+    val phoneNumber: String = "",
+    val email: String = "",
+    val website: String = "",
+    val speciality: String = "",
+    val address: String = "", // Used for Street
+    val postcode: String = "",
+    val city: String = "",
     val notes: String = ""
 )

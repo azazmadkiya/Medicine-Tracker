@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
         Appointment::class,
         Contact::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -45,18 +45,6 @@ abstract class AppDatabase : RoomDatabase() {
                     "medicine_tracker_db"
                 )
                     .fallbackToDestructiveMigration()
-                    .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            scope.launch(Dispatchers.IO) {
-                                val database = getDatabase(context, scope)
-                                database.medicationDao().insertAll(SampleData.getSampleMedications())
-                                database.doseLogDao().insertAll(SampleData.getSampleDoseLogs())
-                                database.appointmentDao().insertAll(SampleData.getSampleAppointments())
-                                database.contactDao().insertAll(SampleData.getSampleContacts())
-                            }
-                        }
-                    })
                     .build()
                 INSTANCE = instance
                 instance

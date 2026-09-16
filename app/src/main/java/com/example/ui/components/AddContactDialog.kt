@@ -14,16 +14,18 @@ import com.example.data.local.entity.Contact
 @Composable
 fun AddContactDialog(
     type: String, // "PHARMACY" or "HOSPITAL"
+    contactToEdit: Contact? = null,
     onDismiss: () -> Unit,
     onSave: (Contact) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(contactToEdit?.name ?: "") }
+    var phoneNumber by remember { mutableStateOf(contactToEdit?.phoneNumber ?: "") }
+    var address by remember { mutableStateOf(contactToEdit?.address ?: "") }
+    var notes by remember { mutableStateOf(contactToEdit?.notes ?: "") }
 
     val isFormValid = name.isNotBlank() && phoneNumber.isNotBlank()
-    val title = if (type == "PHARMACY") "Add Pharmacy" else "Add Hospital"
+    val typeName = if (type == "PHARMACY") "Pharmacy" else "Hospital"
+    val title = if (contactToEdit != null) "Edit $typeName" else "Add $typeName"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -71,7 +73,12 @@ fun AddContactDialog(
                 onClick = {
                     if (isFormValid) {
                         onSave(
-                            Contact(
+                            contactToEdit?.copy(
+                                name = name,
+                                phoneNumber = phoneNumber,
+                                address = address,
+                                notes = notes
+                            ) ?: Contact(
                                 name = name,
                                 type = type,
                                 phoneNumber = phoneNumber,

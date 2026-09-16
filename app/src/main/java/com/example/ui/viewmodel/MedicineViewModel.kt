@@ -200,6 +200,8 @@ class MedicineViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun getLogsForMedication(medicationId: Long) = repository.getLogsForMedication(medicationId)
+
     fun triggerTestNotification(medication: Medication) {
         notificationHelper.showMedicationNotification(
             medicationId = medication.id,

@@ -48,6 +48,10 @@ class MedicationRepository(
         return doseLogDao.getLogsForDateRange(startDate, endDate)
     }
 
+    fun getLogsForMedication(medicationId: Long): Flow<List<DoseLog>> {
+        return doseLogDao.getLogsForMedication(medicationId)
+    }
+
     fun isScheduledForDate(med: Medication, dateString: String): Boolean {
         if (med.frequencyType == "OnDemand") return false
         if (med.frequencyType == "Daily") return true

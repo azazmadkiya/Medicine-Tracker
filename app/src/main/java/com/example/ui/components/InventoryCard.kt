@@ -113,16 +113,20 @@ fun InventoryCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = medication.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = medication.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Surface(
-                            color = medColor.copy(alpha = 0.12f),
+                            color = medColor.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
@@ -133,14 +137,15 @@ fun InventoryCard(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${medication.form} • ${medication.frequency}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "${medication.form} • ${medication.frequency}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
                 // Test low stock alert button
@@ -187,7 +192,7 @@ fun InventoryCard(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "~${medication.estimatedDaysLeft} days left",
+                        text = medication.estimatedTimeLeftFormatted,
                         color = if (isLowStock) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,

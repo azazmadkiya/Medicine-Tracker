@@ -97,15 +97,17 @@ fun MedicationsScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Title
+                // Title
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -172,24 +174,20 @@ fun MedicationsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+            }
 
             // List of Medications
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredMeds, key = { it.id }) { med ->
-                    MedicationDetailCard(
-                        medication = med,
-                        onDelete = { viewModel.deleteMedication(med) },
-                        onTestNotification = { viewModel.triggerTestNotification(med) }
-                    )
-                }
+            items(filteredMeds, key = { it.id }) { med ->
+                MedicationDetailCard(
+                    medication = med,
+                    onDelete = { viewModel.deleteMedication(med) },
+                    onTestNotification = { viewModel.triggerTestNotification(med) }
+                )
+            }
 
-                item {
-                    Spacer(modifier = Modifier.height(80.dp))
-                }
+            item {
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
 
@@ -254,14 +252,18 @@ fun MedicationDetailCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = medication.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = medication.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                             color = medColor.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(6.dp)
@@ -271,17 +273,19 @@ fun MedicationDetailCard(
                                 color = medColor,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${medication.form} • ${medication.frequency}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "${medication.form} • ${medication.frequency}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
                 IconButton(

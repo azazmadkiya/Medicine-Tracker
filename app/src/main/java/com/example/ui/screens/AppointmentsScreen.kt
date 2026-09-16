@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.ui.platform.LocalContext
+import com.example.data.local.entity.Contact
 import com.example.ui.components.AddAppointmentDialog
 import com.example.ui.components.AddContactDialog
 import com.example.ui.components.AppointmentCard
@@ -51,12 +51,16 @@ fun AppointmentsScreen(
 
     val pharmacies by contactViewModel.pharmacies.collectAsState()
     val hospitals by contactViewModel.hospitals.collectAsState()
+    val professionals by contactViewModel.professionals.collectAsState()
 
     var showScheduleDialog by remember { mutableStateOf(false) }
+    var showAddDoctorDialog by remember { mutableStateOf(false) }
     var showAddPharmacyDialog by remember { mutableStateOf(false) }
     var showAddHospitalDialog by remember { mutableStateOf(false) }
+    var contactToEdit by remember { mutableStateOf<Contact?>(null) }
+    var selectedDoctorForDetails by remember { mutableStateOf<Contact?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("APPOINTMENTS", "PHARMACIES", "HOSPITALS")
+    val tabs = listOf("APPOINTMENTS", "PROFESSIONALS", "PHARMACIES", "HOSPITALS")
 
     Scaffold(
         floatingActionButton = {
@@ -64,8 +68,9 @@ fun AppointmentsScreen(
                 onClick = {
                     when (selectedTabIndex) {
                         0 -> showScheduleDialog = true
-                        1 -> showAddPharmacyDialog = true
-                        2 -> showAddHospitalDialog = true
+                        1 -> showAddDoctorDialog = true
+                        2 -> showAddPharmacyDialog = true
+                        3 -> showAddHospitalDialog = true
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -116,10 +121,11 @@ fun AppointmentsScreen(
             }
             
             Spacer(modifier = Modifier.height(16.dp))
-            TabRow(
+            ScrollableTabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.background,
                 contentColor = MaterialTheme.colorScheme.onBackground,
+                edgePadding = 0.dp,
                 indicator = { tabPositions ->
                     if (selectedTabIndex < tabPositions.size) {
                         TabRowDefaults.SecondaryIndicator(
@@ -156,57 +162,7 @@ fun AppointmentsScreen(
                     0 -> { // Appointments
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(20.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(64.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.SupportAgent,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(36.dp)
-                                        )
-                                    }
-                                        
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                        
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "Chat with Mighty",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontSize = 18.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = "Your personal MyTherapy Assistant",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                                
-                            Spacer(modifier = Modifier.height(16.dp))
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                            Spacer(modifier = Modifier.height(16.dp))
                         }
-
                         items(allAppointments, key = { it.id }) { appt ->
                             AppointmentCard(
                                 appointment = appt,
@@ -216,16 +172,44 @@ fun AppointmentsScreen(
                             )
                         }
                     }
-                    1 -> { // Pharmacies
+                    1 -> { // Professionals
                         item { Spacer(modifier = Modifier.height(16.dp)) }
-                        items(pharmacies, key = { it.id }) { pharmacy ->
-                            ContactCard(contact = pharmacy)
+                        items(professionals, key = { it.id }) { doctor ->
+                            ContactCard(
+                                contact = doctor,
+                                onEdit = {
+                                    contactToEdit = doctor
+                                    showAddDoctorDialog = true
+                                },
+                                onDelete = { contactViewModel.deleteContact(doctor) },
+                                onClick = { selectedDoctorForDetails = doctor }
+                            )
                         }
                     }
-                    2 -> { // Hospitals
+                    2 -> { // Pharmacies
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                        items(pharmacies, key = { it.id }) { pharmacy ->
+                            ContactCard(
+                                contact = pharmacy,
+                                onEdit = {
+                                    contactToEdit = pharmacy
+                                    showAddPharmacyDialog = true
+                                },
+                                onDelete = { contactViewModel.deleteContact(pharmacy) }
+                            )
+                        }
+                    }
+                    3 -> { // Hospitals
                         item { Spacer(modifier = Modifier.height(16.dp)) }
                         items(hospitals, key = { it.id }) { hospital ->
-                            ContactCard(contact = hospital)
+                            ContactCard(
+                                contact = hospital,
+                                onEdit = {
+                                    contactToEdit = hospital
+                                    showAddHospitalDialog = true
+                                },
+                                onDelete = { contactViewModel.deleteContact(hospital) }
+                            )
                         }
                     }
                 }
@@ -238,6 +222,8 @@ fun AppointmentsScreen(
 
         if (showScheduleDialog) {
             AddAppointmentDialog(
+                professionals = professionals,
+                hospitals = hospitals,
                 onDismiss = { showScheduleDialog = false },
                 onSave = { newAppt ->
                     viewModel.scheduleAppointment(newAppt)
@@ -246,13 +232,53 @@ fun AppointmentsScreen(
             )
         }
 
+        if (showAddDoctorDialog) {
+            com.example.ui.components.AddProfessionalScreen(
+                contactToEdit = contactToEdit,
+                onDismiss = { 
+                     showAddDoctorDialog = false 
+                     contactToEdit = null
+                },
+                onSave = { contact ->
+                    if (contactToEdit != null) {
+                        contactViewModel.updateContact(contact)
+                    } else {
+                        contactViewModel.insertContact(contact)
+                    }
+                    showAddDoctorDialog = false
+                    contactToEdit = null
+                }
+            )
+        }
+
+        if (selectedDoctorForDetails != null) {
+            com.example.ui.components.ProfessionalDetailsScreen(
+                contact = selectedDoctorForDetails!!,
+                appointments = allAppointments.filter { it.doctorName == selectedDoctorForDetails!!.name },
+                onDismiss = { selectedDoctorForDetails = null },
+                onAddAppointment = {
+                    selectedDoctorForDetails = null
+                    showScheduleDialog = true
+                }
+            )
+        }
+
         if (showAddPharmacyDialog) {
             AddContactDialog(
                 type = "PHARMACY",
-                onDismiss = { showAddPharmacyDialog = false },
+                contactToEdit = contactToEdit,
+                onDismiss = { 
+                    showAddPharmacyDialog = false 
+                    contactToEdit = null
+                },
                 onSave = { contact ->
-                    contactViewModel.insertContact(contact)
+                    if (contactToEdit != null) {
+                        contactViewModel.updateContact(contact)
+                    } else {
+                        contactViewModel.insertContact(contact)
+                    }
                     showAddPharmacyDialog = false
+                    contactToEdit = null
                 }
             )
         }
@@ -260,10 +286,19 @@ fun AppointmentsScreen(
         if (showAddHospitalDialog) {
             AddContactDialog(
                 type = "HOSPITAL",
-                onDismiss = { showAddHospitalDialog = false },
+                contactToEdit = contactToEdit,
+                onDismiss = { 
+                    showAddHospitalDialog = false 
+                    contactToEdit = null
+                },
                 onSave = { contact ->
-                    contactViewModel.insertContact(contact)
+                    if (contactToEdit != null) {
+                        contactViewModel.updateContact(contact)
+                    } else {
+                        contactViewModel.insertContact(contact)
+                    }
                     showAddHospitalDialog = false
+                    contactToEdit = null
                 }
             )
         }

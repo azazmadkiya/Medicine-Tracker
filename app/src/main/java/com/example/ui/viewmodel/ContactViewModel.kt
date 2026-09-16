@@ -25,6 +25,9 @@ class ContactViewModel(application: Application) : AndroidViewModel(application)
     val hospitals: StateFlow<List<Contact>> = repository.hospitals
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val professionals: StateFlow<List<Contact>> = repository.professionals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun insertContact(contact: Contact) {
         viewModelScope.launch {
             repository.insertContact(contact)
