@@ -220,4 +220,11 @@ class MedicineViewModel(application: Application) : AndroidViewModel(application
             unit = medication.unitType
         )
     }
+
+    fun updateDosePhoto(dose: DoseWithMedication, photoUri: String) {
+        viewModelScope.launch {
+            repository.updateDosePhoto(dose.medication.id, dose.scheduledDate, dose.scheduledTime, photoUri)
+        }
+    }
+
 }

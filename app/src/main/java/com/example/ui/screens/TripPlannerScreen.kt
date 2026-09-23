@@ -210,7 +210,7 @@ fun TripPlannerScreen(
                             )
                         } else {
                             allMedications.forEachIndexed { index, med ->
-                                val pillsNeeded = calculatePillsForTrip(med, tripDurationDays.toInt())
+                                val pillsNeeded = calculatePillsForTrip(med, tripDurationDays.toInt(), startDateMillis)
                                 MedicationNeedItem(medication = med, pillsNeeded = pillsNeeded)
                                 if (index < allMedications.lastIndex) {
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
@@ -304,29 +304,38 @@ fun MedicationNeedItem(medication: Medication, pillsNeeded: Int) {
     }
 }
 
-fun calculatePillsForTrip(medication: Medication, days: Int): Int {
-    // Basic calculation based on frequency
-    // E.g. "Once daily" -> 1 per day, "Twice daily" -> 2 per day, etc.
-    val perDay = when (medication.frequencyType) {
-        "Once daily" -> 1
-        "Twice daily" -> 2
-        "Thrice daily" -> 3
-        "Interval" -> {
-            val hours = medication.frequencyData.toIntOrNull() ?: 24
-            24 / hours.coerceAtLeast(1)
-        }
-        "On demand" -> 0
-        "Specific days" -> {
-            val daysOfWeek = medication.frequencyData.split(",").filter { it.isNotBlank() }
-            val fraction = daysOfWeek.size / 7.0f
-            Math.ceil(fraction.toDouble()).toInt() // Roughly 1 per week or so, just simplified
-        }
-        else -> 1
-    }
+fun calculatePillsForTrip(medication: Medication, days: Int, startDateMillis: Long): Int {
+    val doseCountPerDay = medication.doseTimes.split(",").filter { it.isNotBlank() }.size.coerceAtLeast(1)
     
-    // Multiple dose taking into account dose quantity if parseable (e.g., "1 pill", "2 tablets")
-    // For simplicity, we just use perDay * days. If the user takes 1 pill per dose:
-    return perDay * days
+    when (medication.frequencyType) {
+        "Daily" -> {
+            return doseCountPerDay * days
+        }
+        "SpecificDays" -> {
+            val daysOfWeek = medication.frequencyData.split(",").map { it.trim() }
+            var matchCount = 0
+            val cal = Calendar.getInstance()
+            cal.timeInMillis = startDateMillis
+            val sdf = SimpleDateFormat("EEE", Locale.ENGLISH)
+            for (i in 0 until days) {
+                val dow = sdf.format(cal.time)
+                if (daysOfWeek.contains(dow)) {
+                    matchCount++
+                }
+                cal.add(Calendar.DAY_OF_YEAR, 1)
+            }
+            return matchCount * doseCountPerDay
+        }
+        "Interval" -> {
+            val interval = medication.frequencyData.toIntOrNull() ?: 2
+            val occurrences = Math.ceil(days.toDouble() / interval.coerceAtLeast(1).toDouble()).toInt()
+            return occurrences * doseCountPerDay
+        }
+        "OnDemand" -> {
+            return 0
+        }
+        else -> return doseCountPerDay * days
+    }
 }
 
 fun formatDateOrRelative(millis: Long): String {

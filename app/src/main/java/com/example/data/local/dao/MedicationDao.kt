@@ -17,6 +17,9 @@ interface MedicationDao {
     @Query("SELECT * FROM medications ORDER BY name ASC")
     fun getAllMedications(): Flow<List<Medication>>
 
+    @Query("SELECT * FROM medications")
+    suspend fun getAllMedicationsSync(): List<Medication>
+
     @Query("SELECT * FROM medications WHERE id = :id")
     fun getMedicationById(id: Long): Flow<Medication?>
 
@@ -50,3 +53,4 @@ interface MedicationDao {
     @Delete
     suspend fun deleteMedication(medication: Medication)
 }
+ 

@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ContactDao {
+    @Query("SELECT * FROM contacts")
+    suspend fun getAllContactsSync(): List<Contact>
+
     @Query("SELECT * FROM contacts WHERE type = :type ORDER BY name ASC")
     fun getContactsByType(type: String): Flow<List<Contact>>
 
@@ -26,3 +29,4 @@ interface ContactDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(contacts: List<Contact>)
 }
+ 

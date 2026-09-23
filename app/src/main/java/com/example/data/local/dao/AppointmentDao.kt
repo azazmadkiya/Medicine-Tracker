@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AppointmentDao {
+    @Query("SELECT * FROM appointments")
+    suspend fun getAllAppointmentsSync(): List<Appointment>
+
     @Query("SELECT * FROM appointments ORDER BY dateTimeMillis ASC")
     fun getAllAppointments(): Flow<List<Appointment>>
 
@@ -41,3 +44,4 @@ interface AppointmentDao {
     @Delete
     suspend fun deleteAppointment(appointment: Appointment)
 }
+ 

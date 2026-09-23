@@ -1,9 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,20 +71,18 @@ fun TodayScreen(
     val selectedDate by viewModel.selectedDate.collectAsState()
     val doses by viewModel.currentDoses.collectAsState()
     val adherence by viewModel.adherence.collectAsState()
-    val todayStr = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
-    val isPastDay = selectedDate < todayStr
 
     val daysList = remember {
         val list = mutableListOf<DayItem>()
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, -2)
-        val todayStrInner = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
         for (i in 0..7) {
             val dStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(cal.time)
             val dow = SimpleDateFormat("EEE", Locale.getDefault()).format(cal.time)
             val dom = SimpleDateFormat("d", Locale.getDefault()).format(cal.time)
-            list.add(DayItem(dStr, dow, dom, dStr == todayStrInner))
+            list.add(DayItem(dStr, dow, dom, dStr == todayStr))
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         list
@@ -291,24 +287,7 @@ fun TodayScreen(
             }
         }
 
-
-        if (isPastDay) {
-            item {
-                androidx.compose.material3.TextButton(
-                    onClick = { viewModel.setSelectedDate(todayStr) },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "Go to Today",
-                        color = Color(0xFF8A3A19),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-            }
-        }
         // Doses Grouped by Period
-
         if (doses.isEmpty()) {
             item {
                 Card(
@@ -358,8 +337,7 @@ fun TodayScreen(
                         onTake = { viewModel.markDoseTaken(dose) },
                         onSkip = { viewModel.markDoseSkipped(dose) },
                         onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
+                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) }
                     )
                 }
             }
@@ -374,8 +352,7 @@ fun TodayScreen(
                         onTake = { viewModel.markDoseTaken(dose) },
                         onSkip = { viewModel.markDoseSkipped(dose) },
                         onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
+                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) }
                     )
                 }
             }
@@ -390,8 +367,7 @@ fun TodayScreen(
                         onTake = { viewModel.markDoseTaken(dose) },
                         onSkip = { viewModel.markDoseSkipped(dose) },
                         onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
+                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) }
                     )
                 }
             }
@@ -406,12 +382,12 @@ fun TodayScreen(
                         onTake = { viewModel.markDoseTaken(dose) },
                         onSkip = { viewModel.markDoseSkipped(dose) },
                         onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
+                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) }
                     )
                 }
             }
         }
+
         item {
             Spacer(modifier = Modifier.height(72.dp))
         }
@@ -496,7 +472,7 @@ fun PastDayTasksCard(doses: List<DoseWithMedication>) {
             groupedByTime.forEach { (time, timeDoses) ->
                 val displayTime = try {
                     val parsed = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).parse(time)
-                    java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(parsed!!).uppercase(java.util.Locale.getDefault())
+                    java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(parsed!!).lowercase(java.util.Locale.getDefault())
                 } catch (e: Exception) { time }
 
                 Text(
@@ -529,8 +505,7 @@ fun PastDayTasksCard(doses: List<DoseWithMedication>) {
                             fontWeight = FontWeight.Medium,
                             color = if (isTaken) Color.Gray else MaterialTheme.colorScheme.onSurface,
                             textDecoration = if (isTaken) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None,
-                            modifier = Modifier.weight(1f).basicMarquee(),
-                            maxLines = 1
+                            modifier = Modifier.weight(1f)
                         )
                         if (isTaken) {
                             Icon(

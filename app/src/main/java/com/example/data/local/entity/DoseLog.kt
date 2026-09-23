@@ -18,5 +18,6 @@ data class DoseLog(
     val doseTime: String, // "HH:mm"
     val status: String = "PENDING", // "PENDING", "TAKEN", "SKIPPED"
     val takenTimestamp: Long? = null,
-    val notes: String = ""
+    val notes: String = "",
+    val photoUri: String = ""
 )

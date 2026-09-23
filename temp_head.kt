@@ -1,9 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,20 +71,18 @@ fun TodayScreen(
     val selectedDate by viewModel.selectedDate.collectAsState()
     val doses by viewModel.currentDoses.collectAsState()
     val adherence by viewModel.adherence.collectAsState()
-    val todayStr = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
-    val isPastDay = selectedDate < todayStr
 
     val daysList = remember {
         val list = mutableListOf<DayItem>()
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, -2)
-        val todayStrInner = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
         for (i in 0..7) {
             val dStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(cal.time)
             val dow = SimpleDateFormat("EEE", Locale.getDefault()).format(cal.time)
             val dom = SimpleDateFormat("d", Locale.getDefault()).format(cal.time)
-            list.add(DayItem(dStr, dow, dom, dStr == todayStrInner))
+            list.add(DayItem(dStr, dow, dom, dStr == todayStr))
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         list
@@ -291,24 +287,7 @@ fun TodayScreen(
             }
         }
 
-
-        if (isPastDay) {
-            item {
-                androidx.compose.material3.TextButton(
-                    onClick = { viewModel.setSelectedDate(todayStr) },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "Go to Today",
-                        color = Color(0xFF8A3A19),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-            }
-        }
         // Doses Grouped by Period
-
         if (doses.isEmpty()) {
             item {
                 Card(
@@ -358,8 +337,7 @@ fun TodayScreen(
                         onTake = { viewModel.markDoseTaken(dose) },
                         onSkip = { viewModel.markDoseSkipped(dose) },
                         onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
+                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) }
                     )
                 }
             }
@@ -370,181 +348,3 @@ fun TodayScreen(
                 }
                 items(afternoonDoses) { dose ->
                     DoseCard(
-                        dose = dose,
-                        onTake = { viewModel.markDoseTaken(dose) },
-                        onSkip = { viewModel.markDoseSkipped(dose) },
-                        onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
-                    )
-                }
-            }
-
-            if (eveningDoses.isNotEmpty()) {
-                item {
-                    PeriodHeader(title = "Evening", subtitle = "5:00 PM – 8:59 PM", count = eveningDoses.size)
-                }
-                items(eveningDoses) { dose ->
-                    DoseCard(
-                        dose = dose,
-                        onTake = { viewModel.markDoseTaken(dose) },
-                        onSkip = { viewModel.markDoseSkipped(dose) },
-                        onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
-                    )
-                }
-            }
-
-            if (nightDoses.isNotEmpty()) {
-                item {
-                    PeriodHeader(title = "Night", subtitle = "9:00 PM – 5:59 AM", count = nightDoses.size)
-                }
-                items(nightDoses) { dose ->
-                    DoseCard(
-                        dose = dose,
-                        onTake = { viewModel.markDoseTaken(dose) },
-                        onSkip = { viewModel.markDoseSkipped(dose) },
-                        onReset = { viewModel.resetDoseStatus(dose) },
-                        onTestNotification = { viewModel.triggerTestNotification(dose.medication) },
-                        onPhotoSelected = { viewModel.updateDosePhoto(dose, it) }
-                    )
-                }
-            }
-        }
-        item {
-            Spacer(modifier = Modifier.height(72.dp))
-        }
-    }
-}
-
-@Composable
-fun PeriodHeader(
-    title: String,
-    subtitle: String,
-    count: Int
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.weight(1f)
-        ) {
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.padding(top = 2.dp)
-                ) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                }
-            }
-        }
-        
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = CircleShape
-        ) {
-            Text(
-                text = "$count ${if (count == 1) "dose" else "doses"}",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun PastDayTasksCard(doses: List<DoseWithMedication>) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-            Text(
-                text = "Resolved tasks",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(16.dp)
-            )
-
-            val groupedByTime = doses.groupBy { it.scheduledTime }.toSortedMap()
-            groupedByTime.forEach { (time, timeDoses) ->
-                val displayTime = try {
-                    val parsed = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).parse(time)
-                    java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(parsed!!).uppercase(java.util.Locale.getDefault())
-                } catch (e: Exception) { time }
-
-                Text(
-                    text = displayTime,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-
-                timeDoses.forEach { dose ->
-                    val isTaken = dose.status == "TAKEN"
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFFF5F5F5), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("💊", fontSize = 20.sp)
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = dose.medication.name,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isTaken) Color.Gray else MaterialTheme.colorScheme.onSurface,
-                            textDecoration = if (isTaken) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None,
-                            modifier = Modifier.weight(1f).basicMarquee(),
-                            maxLines = 1
-                        )
-                        if (isTaken) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Completed",
-                                tint = Color(0xFF00C853),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        } else {
-                            Box(modifier = Modifier.size(24.dp).background(Color.Transparent, CircleShape).border(2.dp, Color.LightGray, CircleShape))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}

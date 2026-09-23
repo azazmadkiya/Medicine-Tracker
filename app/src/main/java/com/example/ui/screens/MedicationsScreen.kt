@@ -25,6 +25,20 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.PictureAsPdf
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import com.example.utils.PdfGenerator
+
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -50,11 +64,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.basicMarquee
 import com.example.data.local.entity.Medication
 import com.example.ui.components.AddMedicationDialog
+import com.example.ui.components.BackupRestoreDialog
 
 import com.example.ui.viewmodel.MedicineViewModel
 
+@androidx.annotation.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@kotlin.OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun MedicationsScreen(
     viewModel: MedicineViewModel,
@@ -65,6 +83,28 @@ fun MedicationsScreen(
     var selectedCategory by remember { mutableStateOf("All") }
     var showAddDialog by remember { mutableStateOf(false) }
     var showTripPlanner by remember { mutableStateOf(false) }
+    var showBackupDialog by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isGeneratingPdf by remember { mutableStateOf(false) }
+
+    val pdfExportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/pdf")
+    ) { uri: Uri? ->
+        uri?.let {
+            isGeneratingPdf = true
+            scope.launch {
+                val result = PdfGenerator.generateReport(context, it)
+                isGeneratingPdf = false
+                if (result.isSuccess) {
+                    Toast.makeText(context, "PDF Report generated successfully!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Failed to generate PDF.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     val categories = listOf("All", "Tablet", "Capsule", "Liquid", "Inhaler", "Drops")
 
@@ -127,17 +167,44 @@ fun MedicationsScreen(
                     )
                 }
                 
-                IconButton(
-                    onClick = { showTripPlanner = true },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Luggage,
-                        contentDescription = "Trip Planner",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                    IconButton(
+                        onClick = { 
+                            val dateStr = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                            pdfExportLauncher.launch("Medical_Report_$dateStr.pdf") 
+                        },
+                        enabled = !isGeneratingPdf,
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PictureAsPdf,
+                            contentDescription = "Export PDF Report",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(
+                        onClick = { showBackupDialog = true },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SettingsBackupRestore,
+                            contentDescription = "Backup & Restore",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(
+                        onClick = { showTripPlanner = true },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Luggage,
+                            contentDescription = "Trip Planner",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -189,6 +256,10 @@ fun MedicationsScreen(
             item {
                 Spacer(modifier = Modifier.height(80.dp))
             }
+        }
+
+        if (showBackupDialog) {
+            BackupRestoreDialog(onDismiss = { showBackupDialog = false })
         }
 
         if (showAddDialog) {
@@ -257,8 +328,8 @@ fun MedicationDetailCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        modifier = Modifier.basicMarquee(),
+                        maxLines = 1
                     )
                     
                     Spacer(modifier = Modifier.height(4.dp))
@@ -282,8 +353,8 @@ fun MedicationDetailCard(
                             text = "${medication.form} • ${medication.frequency}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            modifier = Modifier.weight(1f).basicMarquee(),
+                            maxLines = 1
                         )
                     }
                 }
@@ -328,8 +399,14 @@ fun MedicationDetailCard(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
+                val formattedTimes = medication.doseTimes.split(",").map { time ->
+                    try {
+                        val parsed = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).parse(time)
+                        java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(parsed!!).uppercase(java.util.Locale.getDefault())
+                    } catch (e: Exception) { time }
+                }.joinToString(", ")
                 Text(
-                    text = "Times: ${medication.doseTimes.replace(",", ", ")}",
+                    text = "Times: $formattedTimes",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface

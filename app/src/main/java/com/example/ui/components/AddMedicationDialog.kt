@@ -33,6 +33,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.DateRange
+import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -43,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,6 +64,7 @@ import com.example.data.local.entity.Medication
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+@androidx.compose.material3.ExperimentalMaterial3Api
 fun AddMedicationDialog(
     onDismiss: () -> Unit,
     onSave: (Medication) -> Unit
@@ -65,7 +77,13 @@ fun AddMedicationDialog(
     val selectedSpecificDays = remember { mutableStateListOf<String>() }
     var intervalDays by remember { mutableStateOf("2") }
     val doseTimes = remember { mutableStateListOf("08:00") }
+    val context = LocalContext.current
     var newTimeInput by remember { mutableStateOf("20:00") }
+    
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var startDateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    val displayDateFormatter = remember { SimpleDateFormat("dd/MM/yy", Locale.getDefault()) }
+    val fullDateFormatter = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     var stock by remember { mutableStateOf("30") }
     var totalPack by remember { mutableStateOf("30") }
@@ -243,43 +261,89 @@ fun AddMedicationDialog(
                 
                 if (scheduleMode != "On demand") {
                     Spacer(modifier = Modifier.height(14.dp))
-
-                    // Schedule Dose Times
-                    Text("Dose Times (HH:mm)", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    
+                    Text("Start date", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = newTimeInput,
-                            onValueChange = { newTimeInput = it },
-                            placeholder = { Text("e.g. 14:00") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                if (newTimeInput.isNotBlank() && !doseTimes.contains(newTimeInput.trim())) {
-                                    doseTimes.add(newTimeInput.trim())
+                    OutlinedTextField(
+                        value = displayDateFormatter.format(Date(startDateMillis)),
+                        onValueChange = { },
+                        readOnly = true,
+                        modifier = Modifier.fillMaxWidth().clickable { showStartDatePicker = true },
+                        trailingIcon = {
+                            IconButton(onClick = { showStartDatePicker = true }) {
+                                Icon(Icons.Default.DateRange, contentDescription = "Select Start Date")
+                            }
+                        }
+                    )
+                    
+                    if (showStartDatePicker) {
+                        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = startDateMillis)
+                        DatePickerDialog(
+                            onDismissRequest = { showStartDatePicker = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    datePickerState.selectedDateMillis?.let {
+                                        startDateMillis = it
+                                    }
+                                    showStartDatePicker = false
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showStartDatePicker = false }) {
+                                    Text("Cancel")
                                 }
                             }
                         ) {
-                            Icon(imageVector = Icons.Default.Add, contentDescription = "Add time")
-                            Text("Add")
+                            DatePicker(state = datePickerState)
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Schedule Dose Times
+                    Text("Dose Times", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    
+                    OutlinedButton(
+                        onClick = { 
+                            val cal = java.util.Calendar.getInstance()
+                            android.app.TimePickerDialog(
+                                context,
+                                { _, hourOfDay, minute ->
+                                    val formattedTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
+                                    if (!doseTimes.contains(formattedTime)) {
+                                        doseTimes.add(formattedTime)
+                                    }
+                                },
+                                cal.get(java.util.Calendar.HOUR_OF_DAY),
+                                cal.get(java.util.Calendar.MINUTE),
+                                false
+                            ).show()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(imageVector = Icons.Default.Schedule, contentDescription = "Add time")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add Dose Time")
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         doseTimes.forEach { time ->
+                            val displayTime = try {
+                                val parsed = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).parse(time)
+                                java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(parsed!!).uppercase(java.util.Locale.getDefault())
+                            } catch (e: Exception) { time }
+                            
                             FilterChip(
                                 selected = true,
                                 onClick = { if (doseTimes.size > 1) doseTimes.remove(time) },
-                                label = { Text(time) },
+                                label = { Text(displayTime) },
                                 trailingIcon = {
                                     if (doseTimes.size > 1) {
                                         Icon(imageVector = Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(14.dp))
@@ -406,7 +470,7 @@ fun AddMedicationDialog(
                                 "Interval" -> intervalDays
                                 else -> ""
                             },
-                            startDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date()),
+                            startDate = fullDateFormatter.format(Date(startDateMillis)),
                             doseTimes = if (scheduleMode == "On demand") "" else doseTimes.sorted().joinToString(","),
                             currentStock = currentStockInt,
                             totalPackSize = totalPackInt,

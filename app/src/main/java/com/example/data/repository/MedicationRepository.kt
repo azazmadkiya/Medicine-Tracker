@@ -195,4 +195,20 @@ class MedicationRepository(
             }
         }
     }
+
+    suspend fun updateDosePhoto(medicationId: Long, date: String, time: String, photoUri: String) {
+        val existing = doseLogDao.getLog(medicationId, date, time)
+        val updatedLog = DoseLog(
+            id = existing?.id ?: 0,
+            medicationId = medicationId,
+            doseDate = date,
+            doseTime = time,
+            status = existing?.status ?: "PENDING",
+            takenTimestamp = existing?.takenTimestamp,
+            notes = existing?.notes ?: "",
+            photoUri = photoUri
+        )
+        doseLogDao.insertOrUpdate(updatedLog)
+    }
+
 }

@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DoseLogDao {
+    @Query("SELECT * FROM dose_logs")
+    suspend fun getAllLogsSync(): List<DoseLog>
+
     @Query("SELECT * FROM dose_logs WHERE doseDate = :date ORDER BY doseTime ASC")
     fun getLogsForDate(date: String): Flow<List<DoseLog>>
 
@@ -37,3 +40,4 @@ interface DoseLogDao {
     @Query("DELETE FROM dose_logs WHERE medicationId = :medicationId")
     suspend fun deleteLogsForMedication(medicationId: Long)
 }
+ 
